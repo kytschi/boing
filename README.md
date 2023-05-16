@@ -4,9 +4,9 @@ This bash script "app" was create for an Amiga emulator laptop I built as a help
 
 It's geared towards the laptop I made it for but can be modified to suit any needs.
 
-![Screenshot](https://ironet.kytschi.com/mike/boing/raw/master/screenshots/logo.png)
+![Screenshot](https://raw.githubusercontent.com/kytschi/boing/master/screenshots/logo.png)
 
-![Screenshot](https://ironet.kytschi.com/mike/boing/raw/master/screenshots/menu.png)
+![Screenshot](https://raw.githubusercontent.com/kytschi/boing/master/screenshots/menu.png)
 
 ## Config
 

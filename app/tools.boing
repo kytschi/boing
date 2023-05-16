@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Tools
+function tools()
+{
+        clear
+        running=true
+
+        while $running; do
+                echo ""
+                echo -e "\e[32m == Tools ==========================================\e[0m"
+                echo ""
+                echo -e "\e[36m  [g]\e[0m Clean game file names"
+                echo ""
+                echo -e "\e[31m  [q]\e[0m Go back"
+
+                summary
+
+                read -p "  Please select an option: " input
+
+                case $input in
+                        [g]*)
+                                clear
+                                echo -e "Cleaning, please wait"
+                                echo ""
+				files=($GAMES_FOLDER*)
+
+                                tput setaf 3
+
+                                for key in ${!files[@]}; do
+                                        file=${files[key]}
+                                        old_file=${file##*/}
+
+                                        new_file=${old_file// /_}
+                                        new_file=${new_file//-/""}
+                                        new_file=${new_file//__/_}
+                                        new_file=${new_file//(/""}
+                                        new_file=${new_file//)/""}
+                                        new_file=${new_file//!/""}
+                                        new_file=${new_file//[/""}
+                                        new_file=${new_file//]/""}
+                                        new_file=${new_file//\'/""}
+                                        new_file=${new_file//+/""}
+
+                                        mv "$file" "$GAMES_FOLDER$new_file" > /dev/null 2>&1
+                                        printf "."
+                                done
+				tput setaf 7
+
+                                printf "\n\n"
+                                echo "DONE!"
+
+                                sleep 0.5
+                                clear
+                                ;;
+                        [q]*)
+                                running=false
+                                ;;
+                        *)
+                                clear
+                                echo ""
+                                echo -e "  \e[31mInvalid selection\e[0m please try again" >&2
+                                ;;
+                esac
+        done
+}

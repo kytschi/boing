@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#Function that watches for the emulator process to end and restarts the menu
+function help()
+{
+        clear
+        echo ""
+        echo -e "\e[32m == Help ==\e[0m"
+        echo ""
+        echo -e "  Type \e[32mboing\e[0m from the terminal to get back the Amiga OS menu."
+        echo ""
+        echo -e "  \e[33m/mnt/storage\e[0m is a shared drive and can be accessed over the "
+	echo "  network as a samba/network share."
+	echo ""
+        echo "  If you write to the storage drive from one of the Amiga OSes, you'll have "
+	echo "  to reboot for the changes to appear in the folder and the other Amiga OSes."
+        echo ""
+        echo -e "  To access shares over the network use "
+	echo -e "  the username \e[33mamiga\e[0m and the password \e[33mneverdies\e[0m"
+        echo ""
+        echo -e "  To access the menu from the emulator press \e[33mfn\e[0m + \e[33mf12\e[0m"
+        echo -e "  To quit the emulator press \e[33malt\e[0m + \e[33mf4\e[0m"
+        echo ""
+        read -p $'  Hit \e[36mANY KEY\e[0m to return' input
+}

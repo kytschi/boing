@@ -1,0 +1,15 @@
+# Theme
+LOGO=true
+TUNE=true
+
+# Paths to the apps
+FS_UAE_BIN=/usr/bin/fs-uae
+FS_UAE_LAUNCHER_BIN=/usr/bin/fs-uae-launcher
+
+# Folders
+FS_FOLDER=/FS-UAE
+GAMES_FOLDER=$FS_FOLDER/Floppies/games
+CFG_FOLDER=$FS_FOLDER/Configurations
+
+# App
+PER_PAGE=30

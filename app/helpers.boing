@@ -1,0 +1,131 @@
+#!/bin/bash
+
+LINE_LENGTH=50
+
+CURSOR_X=0
+CURSOR_Y=3
+START_X=2
+START_Y=2
+
+# Perform a line break
+function linebreak()
+{
+	echo ""
+}
+
+# Set the cursor position
+function cursor()
+{
+        if [ "$2" != "" ]; then
+                CURSOR_X=$2
+        fi
+
+        if [ "$1" != "" ]; then
+                CURSOR_Y=$1
+        fi
+}
+
+# Write a line to screen
+function output()
+{
+        string=$1
+	box=$2
+	spaces=$3
+
+        tput cup $CURSOR_Y $CURSOR_X
+	if [ "$box" == "true" ]; then
+        	printf " | $string "
+		pad=4
+	else
+		printf " $string "
+		pad=2
+	fi
+
+	if [ !$spaces ]; then
+		clean=$(echo -e "$string" | sed "s/$(echo -e "\e")[^m]*m//g")
+		spaces=$(($LINE_LENGTH-${#clean}-$pad))
+	fi
+
+	iLoopSpaces=0
+	while [ $iLoopSpaces -le $spaces ]; do
+		printf " "
+		((iLoopSpaces++))
+	done
+
+	if [ "$box" == "true" ]; then
+                printf "| "
+        fi
+
+        ((CURSOR_Y++))
+}
+
+# Create a blank line
+function spacer()
+{
+	tput cup $CURSOR_Y $CURSOR_X
+        iLoopSpacer=0
+        while [ $iLoopSpacer -le $LINE_LENGTH ]; do
+                printf " "
+                ((iLoopSpacer++))
+        done
+        ((CURSOR_Y++))
+}
+
+# Draw a line
+function drawline()
+{
+	if [ "$1" != "" ]; then
+		length=$1
+	else
+		length=$LINE_LENGTH
+	fi
+
+	tput cup $CURSOR_Y $CURSOR_X
+
+	iLoopLine=0
+	printf " "
+	while [ $iLoopLine -le $length ]; do
+		printf "-"
+		((iLoopLine++))
+	done
+	printf " "
+
+	((CURSOR_Y++))
+}
+
+# Draw a box
+function drawbox()
+{
+	width=$1
+	height=$2
+
+	drawline $width
+
+	iLoopHeight=1
+	while [ $iLoopHeight -le $((height-1)) ]; do
+		output " " true $((width+2))
+		((iLoopHeight++))
+	done
+
+	drawline $width
+}
+
+# Box title
+function boxtitle()
+{
+	string=$1
+	tput cup $CURSOR_Y $CURSOR_X
+
+	printf " -"
+	printf "-"
+	printf "$string"
+
+	length=$2
+	iLoopTitle=0
+	while [ $iLoopTitle -le $((length-1)) ]; do
+		printf "-"
+		((iLoopTitle++))
+	done
+
+	((CURSOR_Y++))
+}

@@ -1,0 +1,214 @@
+#!/bin/bash
+
+# Build and manage your floppy sets
+function floppies()
+{
+        clear
+        floppy_running=true
+
+        while $floppy_running; do
+                echo ""
+                echo -e "\e[32m == Floppy sets ==\e[0m"
+                echo ""
+
+                iLoop=1
+                none=true
+
+                declare -A floppy_sets
+
+                for file in $(ls $FLOPPY_SETS_FOLDER); do
+                        none=false
+
+                        floppy_sets[$iLoop]=$file
+
+                        file=${file/$FLOPPY_SETS_FOLDER\//""}
+                        file=${file/.fs-uae/""}
+
+                        echo -e "\e[33m  [$iLoop]\e[0m $file"
+
+                        iLoop=$((iLoop+1))
+                done
+
+                if $none ; then
+                        echo -e "  NO SETS DEFINED"
+                fi
+
+                echo ""
+                echo -e "\e[36m  [n]\e[0m New"
+                echo ""
+                echo -e "\e[31m  [q]\e[0m Go back"
+
+                summary
+
+                read -p "  Please select an option: " input
+
+                case $input in
+                        [n]*)
+                                clear
+				echo ""
+                		echo -e "\e[32m == Creating floppy sets ==\e[0m"
+                		echo ""
+                                read -p $'  Please enter a name or \e[33mc\e[0m to abort: ' name
+				if [ "$name" != "c" ]; then
+                                	cat /dev/null > $FLOPPY_SETS_FOLDER$name.fs-uae
+					clear
+					echo -e " \e[33mSet created\e[0m"
+				else
+					clear
+				fi
+                                ;;
+                        [q]*)
+                                floppy_running=false
+                                ;;
+                        *)
+                                clear
+                                echo ""
+                                if [[ -z "${input//[a-z0-9]}" ]] && [ -n "$input" ]; then
+                                        floppy_set=${floppy_sets[$input]}
+                                        load_set=$FLOPPY_SETS_FOLDER$floppy_set
+
+                                        if [ -f "$load_set" ]; then
+                                                editFloppySet $floppy_set $load_set
+					else
+                                                echo -e " \e[31mError loading the floppy set\e[0m" >&2
+                                        fi
+                                else
+                                        echo -e " \e[31mInvalid selection\e[0m please try again" >&2
+                                fi
+                                ;;
+                esac
+        done
+}
+
+# Editing the floppy set
+function editFloppySet()
+{
+        # Get the args passed through.
+        floppy_set=$1
+        load_set=$2
+
+        clear
+        sub_floppy_running=true
+        floppy_selected=0
+
+        floppy_set_name=${floppy_set/.fs-uae/""}
+
+        while $sub_floppy_running; do
+                echo ""
+                echo -e " \e[32m== Floppy set\e[0m \e[33m$floppy_set_name\e[0m \e[32m==\e[0m"
+                echo ""
+
+                iLoop=1
+                floppy_count=0
+                declare -A floppies
+
+                while file= read -r line; do
+                        floppies[$floppy_count]=$line
+			floppy=${line##*/}
+
+                        if [ $floppy_selected == $iLoop ]; then
+                                echo -e "  \e[96m[$iLoop] $floppy\e[0m"
+                        else
+                                echo -e "  \e[33m[$iLoop]\e[0m $floppy"
+                        fi
+
+                        iLoop=$((iLoop+1))
+                        floppy_count=$((floppy_count+1))
+                done < "$load_set"
+
+                echo ""
+                echo -e "\e[36m  [a]\e[0m Add game"
+                echo -e "\e[36m  [r]\e[0m Remove game"
+                echo -e "\e[36m  [u]\e[0m Use with emulator"
+		echo -e "\e[36m  [d]\e[0m Delete set"
+                echo ""
+                echo -e "\e[31m  [q]\e[0m Go back"
+
+                summary
+
+                read -p "  Please select an option: " input
+
+                case $input in
+			[a]*)
+                                games false
+				echo "$load_game"
+				if [ -n "$load_game" ]; then
+                                	echo "floppy_image_$floppy_count=$load_game" >> $load_set
+			        fi
+				clear
+                                ;;
+                        [u]*)
+                                load_floppy_set=$load_set
+                                clear
+
+				echo ""
+                                echo -e "\e[33m Selected for use\e[0m"
+                                ;;
+			[d]*)
+				echo ""
+				read -p $'  Are you sure? \e[33mY\e[0m or \e[31mN\e[0m: ' choice
+                                if [ "$choice" == "Y" ] || [ "$choice" == "y" ]; then
+                                        rm $load_set
+					clear
+					echo ""
+                                        echo -e " \e[33mSet deleted\e[0m"
+                                	load_set=""
+					sub_floppy_running=false
+				else
+                                        clear
+                                fi
+				;;
+                        [r]*)
+                                clear
+
+                                # Clear the floppy set
+                                cat /dev/null > $load_set
+
+                                # Remove the floppy from the array
+                                unset floppies[$((floppy_selected-1))]
+
+                                # Rebuild the file
+                                floppy_count=0
+                                for line in ${floppies[@]}; do
+                                        floppy=${line##*/}
+					echo "floppy_image_$floppy_count=$GAMES_FOLDER$floppy" >> $load_set
+                                        floppy_count=$((floppy_count+1))
+                                done
+
+                                # Clear the selected floppy
+                                floppy_selected=0
+
+                                echo  ""
+                                echo -e " \e[33mFloppy has been removed\e[0m"
+                                ;;
+                        [q]*)
+                                sub_floppy_running=false
+                                ;;
+                        *)
+                                clear
+                                if [[ -z "${input//[a-z0-9]}" ]] && [ -n "$input" ]; then
+                                        floppy_selected=$input
+                                else
+                                        echo ""
+                                        echo -e " \e[31mInvalid selection\e[0m please try again" >&2
+                                fi
+                                ;;
+                esac
+        done
+        clear
+}
+
+# Inject the floppies in the config
+function injectFloppies()
+{
+        # Get the cfg file passed through
+        load_cfg=$1
+
+        # Write it to a tmp cfg
+        cat $load_cfg > $TMP_CFG
+
+        # Merge the floppies file
+        if [ -n "$load_floppy_set" ]; then
+                cat $load_floppy_set >> $TMP_CFG
+        fi
+}

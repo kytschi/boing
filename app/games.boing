@@ -1,0 +1,119 @@
+#!/bin/bash
+
+load_game=""
+
+# Games loader
+function games()
+{
+	launcher=$1
+
+        game_running=true
+        games_loop=0
+
+        files=($GAMES_FOLDER/*)
+
+        load_game=""
+        clean=""
+
+        rows=`tput lines`
+        PER_PAGE=$((rows-16))
+
+        while $game_running; do
+                if [ ! -n "$clean" ]; then
+                        clear
+                        clean="no"
+			backgroundGames
+			cursor 2 2
+                fi
+
+		key=$((games_loop + 1))
+                file=${files[games_loop]}
+                file=${file##*/}
+                file=${file//_/ }
+                file=${file/.adf/}
+
+                if [ -n "$file" ]; then
+                        output "\e[33m  [$key]\e[0m $file"
+                        games_loop=$((games_loop + 1))
+                        list_complete=false
+                else
+                        list_complete=true
+                fi
+
+                if [ $((games_loop % PER_PAGE)) == 0 ] || $list_complete ; then
+                        summary
+
+			tput cup $CURSOR_Y 2
+                        read -p $'Enter a \e[33mnumber\e[0m or press \e[36mANY OTHER KEY\e[0m for next page or \e[31mq\e[0m to quit: ' input
+
+                        case $input in
+                                [q]*)
+                                        game_running=false
+                                        ;;
+				*)
+                                        if [[ -z "${input//[0-9]}" ]] && [ -n "$input" ]; then
+                                                load_game=${files[$((input-1))]}
+                                                load_game_name=${load_game/$GAMES_FOLDER/""}
+
+                                                if $launcher && [ -n "$load_game" ]; then
+							cols=`tput cols`
+							cur_x=$((cols/3))
+							cur_y=5
+
+							cursor $cur_y $cur_x
+
+							box_width=$((CFG_MAX_LENGTH+2))
+
+							drawbox $box_width 15
+							tput cup $cur_y $((cur_x+3))
+							echo -e "\e[33mLaunching game\e[0m"
+
+							tput cup $((cur_y+2)) $((cur_x+3))
+                                                        echo -e "\e[33mGame\e[0m: \e[96m$load_game_name\e[0m"
+
+                                                        back=false
+
+                                                       	load_cfg=""
+							cursor $((cur_y+4)) $((cur_x+3))
+							loadCfgs true
+
+							cursor $CURSOR_Y $cur_x
+                                                        output "  \e[31m[q]\e[0m Back" true $box_length
+
+							tput cup $((CURSOR_Y-2)) $cur_x
+                                                        read -p " |   Please select an emulator: " emu
+
+                                                        case $emu in
+                                                                [q]*)
+                                                                        emu_cfg=""
+                                                                        ;;
+                                                                *)
+									emu_cfg=${input_cfgs[$emu]}
+                                                                        ;;
+                                                        esac
+
+                                                        if [ -n "$emu_cfg" ]; then
+                                                                output "Loading \e[33m$load_game\e[0m"
+                                                                injectFloppies $emu_cfg
+                                                                $FS_UAE_BIN $TMP_CFG --floppy-drive-0="$load_game"
+								load_cfg=""
+								emu_cfg=""
+                                                        fi
+
+                                                        clean=""
+                                                        load_game=""
+                                                        games_loop=$((games_loop - PER_PAGE))
+                                                else
+                                                        game_running=false
+                                                fi
+                                        else
+                                                clean=""
+                                                if $list_complete ; then
+							games_loop=0;
+                                                fi
+                                        fi
+                                        ;;
+                        esac
+                fi
+        done
+}

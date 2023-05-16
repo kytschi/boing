@@ -1,0 +1,148 @@
+#!/bin/bash
+
+declare -A input_cfgs
+load_cfg=""
+CFG_MAX_LENGTH=0
+
+# Load the cfg files and output them for selection
+function loadCfgs()
+{
+        iLoopCfg=1
+
+	remember_cfg=$1
+
+	declare -A cfg_output
+
+	CFG_MAX_LENGTH=0
+        for file in $(ls $CFG_FOLDER/*.fs-uae); do
+		name=${file/$CFG_FOLDER\//""}
+                name=${name/.fs-uae/""}
+                name=${name//_/ }
+
+		if [ ${#name} -ge $CFG_MAX_LENGTH ]; then
+			CFG_MAX_LENGTH=${#string}
+		fi
+        done
+
+	if [ $CFG_MAX_LENGTH -le $LINE_LENGTH ]; then
+		CFG_MAX_LENGTH=$LINE_LENGTH
+	fi
+
+	boxtitle "\e[33mEmulators\e[0m" $((CFG_MAX_LENGTH-10))
+	output " " true $CFG_MAX_LENGTH
+
+	for file in $(ls $CFG_FOLDER/*.fs-uae); do
+                input_cfgs[$iLoopCfg]=$file
+
+                name=${file/$CFG_FOLDER\//""}
+                name=${name/.fs-uae/""}
+                name=${name//_/ }
+
+		left_over=$((CFG_MAX_LENGTH-${#name}-${#iLoopCfg}-3))
+		if $remeber_cfg ; then
+                        if [ "$load_cfg" == "$file" ]; then
+                                output "\e[96m[$iLoopCfg] $name\e[0m" true $left_over
+                        else
+                                output "\e[33m[$iLoopCfg]\e[0m $name" true $left_over
+                        fi
+                else
+                        output "\e[33m[$iLoopCfg]\e[0m $name" true $left_over
+                fi
+		((iLoopCfg++))
+	done
+
+	output " " true $CFG_MAX_LENGTH
+	drawline $CFG_MAX_LENGTH
+}
+
+#Edit menu
+function edit()
+{
+        clear
+
+        running=true
+	load_cfg=""
+
+        while $running; do
+                spacer
+
+                output "\e[32m== Configurations ==\e[0m"
+
+		spacer
+
+                loadCfgs
+
+                spacer
+
+		output "\e[36m[e]\e[0m Edit"
+                output "\e[36m[n]\e[0m New"
+		output "\e[36m[d]\e[0m Delete"
+
+		spacer
+
+		output "\e[36m[l]\e[0m fs-uae-launcher GUI editor"
+                output "\e[36m[c]\e[0m Boing config"
+
+                spacer
+
+                output "\e[31m[q]\e[0m Go back"
+
+                summary
+
+                read -p "  Please select an option: " input
+
+		case $input in
+			[e]*)
+				spacer
+				output "Editing confg \e[33m$load_cfg\e]0m"
+                                nano -c $load_cfg
+                                clear
+				;;
+                        [c]*)
+                                nano -c $APP_CFG
+                                clear
+                                ;;
+                        [l]*)
+                                $FS_UAE_LAUNCHER_BIN
+                                clear
+                                ;;
+			[d]*)
+				spacer
+				read -p $'  Are you sure? \e[33mY\e[0m or \e[31mN\e[0m: ' choice
+				if [ "$choice" == "y" ] ||[ "$choice" == "Y" ]; then
+					rm $load_cfg
+					clear
+
+					spacer
+					output "\e[33mConfiguration file deleted\e[0m"
+					load_cfg=""
+				else
+					clear
+				fi
+				;;
+			[n]*)
+				spacer
+				load_cfg=""
+				read -p $'  Please enter a name or \e[31mc\e[0m to abort: ' file
+				if [ "$file" != "c" ]; then
+					cat /dev/null > $CFG_FOLDER/$file.fs-uae
+				fi
+				clear
+				;;
+                        [q]*)
+                                running=false
+				load_cfg=""
+                                ;;
+                        *)
+                                clear
+                                spacer
+                                load_cfg=${input_cfgs[$input]}
+                                if [ -f "$load_cfg" ]; then
+                                        clear
+				 else
+                                        output " \e[31mInvalid selection\e[0m please try again" >&2
+                                fi
+                                ;;
+                esac
+        done
+}

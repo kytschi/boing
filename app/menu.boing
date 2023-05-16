@@ -1,0 +1,126 @@
+#!/bin/bash
+
+# Menu function that kicks everything off.
+function menu() 
+{
+        clear
+
+        while true; do
+		backgroundMenu
+
+		cursor $START_Y $START_X
+
+		loadCfgs
+
+                spacer
+		cursor $CURSOR_Y $((START_X+2))
+
+                output "\e[36m[g]\e[0m Games loader"
+                output "\e[36m[f]\e[0m Floppy set"
+                output "\e[36m[c]\e[0m Configurations"
+                output "\e[36m[n]\e[0m Network manager"
+                output "\e[36m[b]\e[0m Web browser"
+                output "\e[36m[t]\e[0m Tools"
+                output "\e[36m[h]\e[0m Help"
+                output "\e[36m[u]\e[0m Update"
+
+		spacer
+
+                output "\e[31m[r]\e[0m Reboot"
+                output "\e[31m[s]\e[0m Shutdown"
+                output "\e[31m[q]\e[0m Quit"
+
+		cursor $CURSOR_Y $START_X
+		summary
+
+		tput cup $CURSOR_Y $((START_X+2))
+                read -p "Please select an option: " input
+
+                case $input in
+                        [n]*)
+                                nm-connection-editor& > /dev/null
+                                clear
+                                ;;
+                        [g]*)
+                                games true
+                                clear
+                                ;;
+                        [u]*)
+                                clear
+                                cd $BASE_PATH
+				git config pull.rebase false
+                                output=$(git stash > /dev/null)
+                                output=$(git pull > /dev/null)
+				clear
+                                chmod -R 775 .
+
+				spacer
+
+                                output "App updated"
+                                output "Please \e[33mrestart\e[0m the app or \e[31mreboot\e[0m"
+                                ;;
+                        [t]*)
+				tools
+                                clear
+                                ;;
+                        [f]*)
+                                floppies
+                                clear
+                                ;;
+                        [b]*)
+                                firefox& > /dev/null
+                                clear
+                                ;;
+                        [r]*)
+				clear
+                                spacer
+                                output "Rebooting"
+                                reboot
+                                break
+                                ;;
+                        [s]*)
+				clear
+                                spacer
+                                output "Shutting down"
+                                shutdown now
+                                break
+                                ;;
+                        [h]*)
+                                help
+				clear
+                                ;;
+                        [c]*)
+                                edit
+                                clear
+                                ;;
+                        [q]*)
+				cursor 0 0
+                                clear
+                                spacer
+                                output "Quiting to terminal. Type \e[32mboing\e[0m to re-launch the menu."
+                                spacer
+				linebreak
+                                exit 1
+                                ;;
+                        *)
+                                clear
+                                spacer
+
+                                if [[ -z "${input//[a-z0-9]}" ]] && [ -n "$input" ]; then
+                                        load_cfg=${input_cfgs[$input]}
+                                        injectFloppies $load_cfg
+
+                                        if [ -f "$load_cfg" ]; then
+                                                output "Booting emulator with \e[33m$load_cfg\e[0m"
+                                                $FS_UAE_BIN $TMP_CFG
+                                                clear
+					else
+                                                output "\e[31mInvalid selection\e[0m please try again" >&2
+                                        fi
+                                else
+                                        output "\e[31mInvalid selection\e[0m please try again" >&2
+                                fi
+                                ;;
+                esac
+        done
+}

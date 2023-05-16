@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# Load the theme
+tput civis
+
+function backgroundMenu()
+{
+	cols=`tput cols`
+    startx=$((cols/2))
+
+	convert $BASE_PATH/theme/background_menu.png \
+		-background none \
+		-layers flatten jpg:- | jp2a - --color --fill > $BASE_PATH/theme/background_menu.txt
+
+	BK_GFX=$BASE_PATH/theme/background_menu.txt
+
+	iLoop=0
+	while IFS= read -r line; do
+		tput cup $iLoop $startx
+                printf '%s\n' "$line"
+		((iLoop++))
+        done < "$BK_GFX"
+}
+
+function backgroundGames()
+{
+        cols=`tput cols`
+        startx=$((cols/2))
+
+        convert $BASE_PATH/theme/background_games.png \
+		-background none \
+		-layers flatten jpg:- | jp2a - --color -f --fill > $BASE_PATH/theme/background_games.txt
+
+        BK_GFX=$BASE_PATH/theme/background_games.txt
+
+        iLoop=0
+        while IFS= read -r line; do
+                tput cup $iLoop $startx
+                printf '%s\n' "$line"
+                ((iLoop++))
+        done < "$BK_GFX"
+}
+
+if $TUNE ; then
+	output$(mpg123 -q $BASE_PATH/theme/tune.mp3 > /dev/null &)
+fi
+
+if $LOGO ; then
+	# Re-render the logo to fit the terminal
+	convert $BASE_PATH/theme/logo.png -background none -layers flatten jpg:- | jp2a - --color --fill > $BASE_PATH/theme/logo.txt
+       	LOGO_GFX=$BASE_PATH/theme/logo.txt
+
+       	clear
+       	while IFS= read -r line; do
+               	printf '%s\n' "$line"
+               	sleep 0.1
+       	done <"$LOGO_GFX"
+fi
+
+#tput cnorm
+
+if $TUNE || $LOGO ; then
+	rows=`tput lines`
+	y=$((rows/3))
+
+	cols=`tput cols`
+	x=$((cols/4))
+
+	cursor $y $x
+	output ""
+	output 'press \e[36mANY KEY\e[0m to start'
+	output ""
+
+	read -s -n 10000 input
+fi
+
+if $TUNE ; then
+	output=$(killall -9 mpg123 > /dev/null)
+fi

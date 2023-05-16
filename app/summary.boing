@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Generate the summary
+function summary()
+{
+        #Get the battery percentage
+        BAT_PERCENT=$(upower -i $(upower -e | grep BAT) | grep --color=never -E "percentage")
+        BAT_PERCENT=${BAT_PERCENT/percentage:/""}
+        BAT_PERCENT="$(echo -e "${BAT_PERCENT}" | tr -d '[:space:]')"
+
+	if [ ! -n "$BAT_PERCENT" ]; then
+		BAT_PERCENT="none"
+	fi
+
+        spacer
+	drawline $LINE_LENGTH
+	spacer
+
+        floppy_set="none"
+        if [ -n "$load_floppy_set" ]; then
+                floppy_set=${load_floppy_set##*/}
+                floppy_set=${floppy_set/.fs-uae/""}
+        fi
+
+	cursor $CURSOR_Y $((START_X+2))
+
+	output "\e[33mFLOPPY SET\e[0m $floppy_set"
+        output "\e[33mBATTERY\e[0m $BAT_PERCENT" 
+
+
+	cursor $CURSOR_Y $START_X
+
+        spacer
+
+	drawline $LINE_LENGTH
+
+	spacer
+}
